@@ -5,6 +5,7 @@ const FOOD_COLOUR = 'red';
 
 // Construct the socket.io connection URL dynamically
 const socketUrl = window.location.protocol + '//' + location.hostname + ':3000';
+console.log(socketUrl);
 const socket = io(socketUrl);
 
 socket.on('init', handleInit);
