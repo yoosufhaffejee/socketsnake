@@ -3,7 +3,9 @@ const SNAKE1_COLOUR = 'green';
 const SNAKE2_COLOUR = 'yellow';
 const FOOD_COLOUR = 'red';
 
-const socket = io('http://localhost:3000');
+// Construct the socket.io connection URL dynamically
+const socketUrl = window.location.protocol + '//' + location.hostname + ':3000';
+const socket = io(socketUrl);
 
 socket.on('init', handleInit);
 socket.on('gameState', handleGameState);
@@ -22,6 +24,22 @@ const gameCodeDisplay = document.getElementById('gameCodeDisplay');
 newGameBtn.addEventListener('click', newGame);
 joinGameBtn.addEventListener('click', joinGame);
 
+// Touch event handling
+let touchstartX = 0;
+let touchstartY = 0;
+let touchendX = 0;
+let touchendY = 0;
+let isTouchDevice = false;
+
+// Detect if the device is touch-enabled
+if ('ontouchstart' in window || navigator.maxTouchPoints) {
+  isTouchDevice = true;
+  gameScreen.addEventListener('touchstart', handleTouchStart);
+  gameScreen.addEventListener('touchend', handleTouchEnd);
+} else {
+  // Add keyboard event listeners for desktop
+  document.addEventListener('keydown', keydown);
+}
 
 function newGame() {
   socket.emit('newGame');
@@ -33,10 +51,6 @@ function joinGame() {
   socket.emit('joinGame', code);
   init();
 }
-
-let canvas, ctx;
-let playerNumber;
-let gameActive = false;
 
 function init() {
   initialScreen.style.display = "none";
@@ -50,8 +64,47 @@ function init() {
   ctx.fillStyle = BG_COLOUR;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  document.addEventListener('keydown', keydown);
   gameActive = true;
+}
+
+function handleTouchStart(event) {
+  touchstartX = event.changedTouches[0].screenX;
+  touchstartY = event.changedTouches[0].screenY;
+}
+
+function handleTouchEnd(event) {
+  touchendX = event.changedTouches[0].screenX;
+  touchendY = event.changedTouches[0].screenY;
+  handleSwipe();
+}
+
+function handleSwipe() {
+  if (!isTouchDevice) {
+    return; // Only handle swipe gestures on touch devices
+  }
+
+  const deltaX = touchendX - touchstartX;
+  const deltaY = touchendY - touchstartY;
+  
+  if (Math.abs(deltaX) > Math.abs(deltaY)) {
+    // Horizontal swipe
+    if (deltaX > 0) {
+      // Swipe right
+      socket.emit('keydown', 39); // Example keyCode for right arrow key
+    } else {
+      // Swipe left
+      socket.emit('keydown', 37); // Example keyCode for left arrow key
+    }
+  } else {
+    // Vertical swipe
+    if (deltaY > 0) {
+      // Swipe down
+      socket.emit('keydown', 40); // Example keyCode for down arrow key
+    } else {
+      // Swipe up
+      socket.emit('keydown', 38); // Example keyCode for up arrow key
+    }
+  }
 }
 
 function keydown(e) {
@@ -129,3 +182,4 @@ function reset() {
   initialScreen.style.display = "block";
   gameScreen.style.display = "none";
 }
+
