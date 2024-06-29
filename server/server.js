@@ -1,7 +1,18 @@
-const io = require('socket.io')();
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
+const cors = require('cors'); // Import cors middleware
+
 const { initGame, gameLoop, getUpdatedVelocity, getVelocityAfterSwipe } = require('./game');
 const { FRAME_RATE } = require('./constants');
 const { makeid } = require('./utils');
+
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server);
+
+// CORS middleware setup
+app.use(cors());
 
 const state = {};
 const clientRooms = {};
@@ -156,4 +167,8 @@ function handleSwipe() {
   }
 }
 
-io.listen(process.env.PORT || 3000);
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT}`);
+});
+
